@@ -133,8 +133,16 @@ class SuperPoint(nn.Module):
             c5, self.config['descriptor_dim'],
             kernel_size=1, stride=1, padding=0)
 
-        path = Path(__file__).parent / 'weights/superpoint_v1.pth'
-        self.load_state_dict(torch.load(str(path)))
+        checkpoint = torch.load(config["ckpt_path"],
+                                map_location=torch.device("cpu"))
+        if "model_state_dict" in checkpoint:
+            filtered_state_dict = {k: v for k, v in checkpoint['model_state_dict'].items() if not k.startswith("bn")}
+            self.load_state_dict(filtered_state_dict)
+        else:
+            self.load_state_dict(checkpoint)
+            
+        print(f"loaded model from path {config['ckpt_path']}")            
+
 
         mk = self.config['max_keypoints']
         if mk == 0 or mk < -1:
